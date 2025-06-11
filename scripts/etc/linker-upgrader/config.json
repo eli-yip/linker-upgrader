@@ -1,0 +1,25 @@
+{
+    "upload_dir": "./uploads",
+    "target_dir": "/opt/linkerbot",
+    "backup_dir": "/opt/linkerbot/backup",
+    "service_name": "linker-upgrade",
+    "port": ":6110",
+    "max_file_size": 100,
+    "enable_backup": true,
+    "enable_service": true,
+    "enable_cleanup": true,
+    "cleanup_interval": 1,
+    "file_max_age": 24,
+    "dir_permission": "0755",
+    "file_permission": "0644",
+    "exec_permission": "0755",
+    "title": "🚀 灵心巧手 - 上位机程序升级",
+    "description": "支持 .tar.gz, .zip, 可执行文件的程序升级系统",
+    "accept_types": [
+        ".tar.gz",
+        ".zip",
+        ".gz",
+        "application/x-executable",
+        "application/octet-stream"
+    ]
+}
