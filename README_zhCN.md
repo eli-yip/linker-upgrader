@@ -37,7 +37,7 @@
 
 ```bash
 # 克隆仓库
-git clone https://github.com/soulteary/linker-upgrader.git
+git clone https://github.com/linker-bot/linker-upgrader.git
 cd upgrade-system
 
 # 编译程序
@@ -45,7 +45,7 @@ go build -o upgrade-system main.go
 
 # TBD
 # 或者下载预编译的二进制文件
-wget https://github.com/soulteary/linker-upgrader/releases/latest/download/upgrade-system-linux-amd64
+wget https://github.com/linker-bot/linker-upgrader/releases/latest/download/upgrade-system-linux-amd64
 chmod +x upgrade-system-linux-amd64
 ```
 
@@ -183,29 +183,35 @@ sudo systemctl start upgrade-system
 
 ### Docker 部署
 
-```dockerfile
-FROM golang:1.20-alpine AS builder
-WORKDIR /app
-COPY . .
-RUN go build -o upgrade-system main.go
-
-FROM alpine:latest
-RUN apk --no-cache add ca-certificates tar unzip
-WORKDIR /root/
-COPY --from=builder /app/upgrade-system .
-COPY config.json .
-EXPOSE 8080
-CMD ["./upgrade-system"]
-```
-
-构建和运行：
+#### 使用预构建镜像
 
 ```bash
-docker build -t upgrade-system .
-docker run -d -p 8080:8080 \
+# 拉取最新版本
+docker pull ghcr.io/linker-bot/linker-upgrader:latest
+
+# 运行容器
+docker run -d -p 6110:6110 \
+  --name linker-upgrader \
   -v /opt/myapp:/opt/myapp \
-  -v /etc/upgrade-system:/etc/upgrade-system \
-  upgrade-system
+  -v ./config.json:/etc/linker-upgrader/config.json \
+  ghcr.io/linker-bot/linker-upgrader:latest \
+  -config /etc/linker-upgrader/config.json
+```
+
+#### 使用 Docker Compose
+
+```yaml
+services:
+  linker-upgrader:
+    image: ghcr.io/linker-bot/linker-upgrader:latest
+    container_name: linker-upgrader
+    ports:
+      - "6110:6110"
+    volumes:
+      - /opt/myapp:/opt/myapp
+      - ./config.json:/etc/linker-upgrader/config.json
+    command: ["-config", "/etc/linker-upgrader/config.json"]
+    restart: unless-stopped
 ```
 
 ### Nginx 反向代理
