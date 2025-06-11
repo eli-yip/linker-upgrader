@@ -4,6 +4,8 @@ A simple, secure, and configurable web-based program upgrade system that support
 
 English | [中文](README_zhCN.md)
 
+![](.github/banner.jpg)
+
 ## ✨ Features
 
 - 🌐 **Web Interface**: User-friendly interface with drag-and-drop upload support
