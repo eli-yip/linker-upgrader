@@ -1,0 +1,109 @@
+version: 2
+
+project_name: linker-upgrader
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: linker-upgrader
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm64
+      - arm
+    goarm:
+      - "6"
+      - "7"
+    ldflags:
+      - -s -w
+      - -X 'main.VERSION={{ .Tag }}'
+    env:
+      - CGO_ENABLED=0
+
+archives:
+  - formats: ["tar.gz"]
+    files:
+      - README.md
+      - README_zhCN.md
+      - LICENSE
+
+release:
+  draft: false
+
+dockers:
+  - image_templates:
+      - "ghcr.io/{{ .Env.GITHUB_USERNAME }}/linker-upgrader:{{ .Tag }}-amd64"
+    dockerfile: Dockerfile.goreleaser
+    use: buildx
+    build_flag_templates:
+      - "--platform=linux/amd64"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.title={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+    goos: linux
+    goarch: amd64
+
+  - image_templates:
+      - "ghcr.io/{{ .Env.GITHUB_USERNAME }}/linker-upgrader:{{ .Tag }}-arm64"
+    dockerfile: Dockerfile.goreleaser
+    use: buildx
+    build_flag_templates:
+      - "--platform=linux/arm64"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.title={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+    goos: linux
+    goarch: arm64
+
+  - image_templates:
+      - "ghcr.io/{{ .Env.GITHUB_USERNAME }}/linker-upgrader:{{ .Tag }}-armv6"
+    dockerfile: Dockerfile.goreleaser
+    use: buildx
+    build_flag_templates:
+      - "--platform=linux/arm/v6"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.title={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+    goos: linux
+    goarch: arm
+    goarm: "6"
+
+  - image_templates:
+      - "ghcr.io/{{ .Env.GITHUB_USERNAME }}/linker-upgrader:{{ .Tag }}-armv7"
+    dockerfile: Dockerfile.goreleaser
+    use: buildx
+    build_flag_templates:
+      - "--platform=linux/arm/v7"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.title={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+    goos: linux
+    goarch: arm
+    goarm: "7"
+
+docker_manifests:
+  - name_template: "ghcr.io/{{ .Env.GITHUB_USERNAME }}/linker-upgrader:{{ .Tag }}"
+    image_templates:
+      - "ghcr.io/{{ .Env.GITHUB_USERNAME }}/linker-upgrader:{{ .Tag }}-amd64"
+      - "ghcr.io/{{ .Env.GITHUB_USERNAME }}/linker-upgrader:{{ .Tag }}-arm64"
+      - "ghcr.io/{{ .Env.GITHUB_USERNAME }}/linker-upgrader:{{ .Tag }}-armv6"
+      - "ghcr.io/{{ .Env.GITHUB_USERNAME }}/linker-upgrader:{{ .Tag }}-armv7"
+  - name_template: "ghcr.io/{{ .Env.GITHUB_USERNAME }}/linker-upgrader:latest"
+    image_templates:
+      - "ghcr.io/{{ .Env.GITHUB_USERNAME }}/linker-upgrader:{{ .Tag }}-amd64"
+      - "ghcr.io/{{ .Env.GITHUB_USERNAME }}/linker-upgrader:{{ .Tag }}-arm64"
+      - "ghcr.io/{{ .Env.GITHUB_USERNAME }}/linker-upgrader:{{ .Tag }}-armv6"
+      - "ghcr.io/{{ .Env.GITHUB_USERNAME }}/linker-upgrader:{{ .Tag }}-armv7"
+  - name_template: "ghcr.io/{{ .Env.GITHUB_USERNAME }}/linker-upgrader:v{{ .Major }}"
+    image_templates:
+      - "ghcr.io/{{ .Env.GITHUB_USERNAME }}/linker-upgrader:{{ .Tag }}-amd64"
+      - "ghcr.io/{{ .Env.GITHUB_USERNAME }}/linker-upgrader:{{ .Tag }}-arm64"
+      - "ghcr.io/{{ .Env.GITHUB_USERNAME }}/linker-upgrader:{{ .Tag }}-armv6"
+      - "ghcr.io/{{ .Env.GITHUB_USERNAME }}/linker-upgrader:{{ .Tag }}-armv7"

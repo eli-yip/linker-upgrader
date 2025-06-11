@@ -26,7 +26,7 @@ type Config struct {
 	// 服务配置
 	ServiceName string `json:"service_name"`
 	Port        string `json:"port"`
-	MaxFileSize int64  `json:"max_file_size"` // 单位: MB
+	MaxFileSize int64  `json:"max_file_size"` // 单位：MB
 
 	// 功能开关
 	EnableBackup    bool `json:"enable_backup"`
@@ -58,8 +58,8 @@ func getDefaultConfig() *Config {
 		EnableBackup:    true,
 		EnableService:   true,
 		EnableCleanup:   true,
-		CleanupInterval: 1,  // 1小时
-		FileMaxAge:      24, // 24小时
+		CleanupInterval: 1,  // 1 小时
+		FileMaxAge:      24, // 24 小时
 		DirPermission:   "0755",
 		FilePermission:  "0644",
 		ExecPermission:  "0755",
@@ -74,7 +74,7 @@ var appConfig *Config
 
 type UpgradeHandler struct{}
 
-// 动态HTML模板
+// 动态 HTML 模板
 const htmlTemplate = `
 <!DOCTYPE html>
 <html>
@@ -104,7 +104,7 @@ const htmlTemplate = `
         <h1>{{.Config.Title}}</h1>
         
         <div class="config">
-            <strong>当前配置:</strong> 目标目录: {{.Config.TargetDir}} | 服务: {{.Config.ServiceName}} | 最大文件: {{.Config.MaxFileSize}}MB
+            <strong>当前配置:</strong> 目标目录：{{.Config.TargetDir}} | 服务：{{.Config.ServiceName}} | 最大文件：{{.Config.MaxFileSize}}MB
         </div>
         
         {{if .Message}}
@@ -169,7 +169,7 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 
 	file, handler, err := r.FormFile("file")
 	if err != nil {
-		showResult(w, "上传失败: "+err.Error(), "error", "")
+		showResult(w, "上传失败："+err.Error(), "error", "")
 		return
 	}
 	defer file.Close()
@@ -178,7 +178,7 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 
 	// 创建上传目录
 	if err := os.MkdirAll(appConfig.UploadDir, getPermission(appConfig.DirPermission)); err != nil {
-		showResult(w, "创建上传目录失败: "+err.Error(), "error", "")
+		showResult(w, "创建上传目录失败："+err.Error(), "error", "")
 		return
 	}
 
@@ -186,20 +186,20 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	uploadPath := filepath.Join(appConfig.UploadDir, handler.Filename)
 	dst, err := os.Create(uploadPath)
 	if err != nil {
-		showResult(w, "创建文件失败: "+err.Error(), "error", "")
+		showResult(w, "创建文件失败："+err.Error(), "error", "")
 		return
 	}
 	defer dst.Close()
 
 	if _, err := io.Copy(dst, file); err != nil {
-		showResult(w, "保存文件失败: "+err.Error(), "error", "")
+		showResult(w, "保存文件失败："+err.Error(), "error", "")
 		return
 	}
 
 	// 执行升级
 	logs, err := performUpgrade(uploadPath, handler.Filename)
 	if err != nil {
-		showResult(w, "升级失败: "+err.Error(), "error", logs)
+		showResult(w, "升级失败："+err.Error(), "error", logs)
 		return
 	}
 
@@ -280,7 +280,7 @@ func performUpgrade(filePath, filename string) (string, error) {
 			// 等待一下再检查状态
 			time.Sleep(2 * time.Second)
 			if err := runCommand("systemctl", "is-active", appConfig.ServiceName); err != nil {
-				logs.WriteString("   警告: 服务状态检查失败，请手动验证\n")
+				logs.WriteString("   警告：服务状态检查失败，请手动验证\n")
 			} else {
 				logs.WriteString("   ✓ 服务运行正常\n")
 			}
@@ -376,7 +376,7 @@ func isExecutable(filePath string) bool {
 		return false
 	}
 
-	// ELF 魔数: 0x7F 'E' 'L' 'F'
+	// ELF 魔数：0x7F 'E' 'L' 'F'
 	if len(header) >= 4 && header[0] == 0x7F && header[1] == 'E' && header[2] == 'L' && header[3] == 'F' {
 		return true
 	}
@@ -546,7 +546,7 @@ func main() {
 
 	// 检查是否以 root 权限运行
 	if os.Geteuid() != 0 && appConfig.EnableService {
-		log.Println("警告: 建议以 root 权限运行以确保能够操作系统服务")
+		log.Println("警告：建议以 root 权限运行以确保能够操作系统服务")
 	}
 
 	// 启动清理任务（可选）
@@ -576,7 +576,7 @@ func main() {
 	log.Printf("文件清理: %v", appConfig.EnableCleanup)
 
 	if err := http.ListenAndServe(appConfig.Port, nil); err != nil {
-		log.Fatal("启动服务器失败:", err)
+		log.Fatal("启动服务器失败：", err)
 	}
 }
 

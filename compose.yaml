@@ -1,0 +1,11 @@
+services:
+  linker-upgrader:
+    image: ghcr.io/linker-bot/linker-upgrader:latest
+    container_name: linker-upgrader
+    ports:
+      - "6110:6110"
+    volumes:
+      - /opt/myapp:/opt/myapp
+      - ./config.json:/etc/linker-upgrader/config.json
+    command: ["-config", "/etc/linker-upgrader/config.json"]
+    restart: unless-stopped

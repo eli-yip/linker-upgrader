@@ -37,7 +37,7 @@
 
 ```bash
 # 克隆仓库
-git clone https://github.com/soulteary/linker-upgrader.git
+git clone https://github.com/linker-bot/linker-upgrader.git
 cd upgrade-system
 
 # 编译程序
@@ -45,7 +45,7 @@ go build -o upgrade-system main.go
 
 # TBD
 # 或者下载预编译的二进制文件
-wget https://github.com/soulteary/linker-upgrader/releases/latest/download/upgrade-system-linux-amd64
+wget https://github.com/linker-bot/linker-upgrader/releases/latest/download/upgrade-system-linux-amd64
 chmod +x upgrade-system-linux-amd64
 ```
 
@@ -73,7 +73,7 @@ chmod +x upgrade-system-linux-amd64
 
 ### 4. 访问 Web 界面
 
-打开浏览器访问: `http://localhost:8080`
+打开浏览器访问：`http://localhost:8080`
 
 ## ⚙️ 配置详解
 
@@ -86,12 +86,12 @@ chmod +x upgrade-system-linux-amd64
   "backup_dir": "/opt/myapp/backup",            // 备份目录
   "service_name": "myapp",                      // systemd 服务名
   "port": ":8080",                             // 服务端口
-  "max_file_size": 100,                        // 最大文件大小(MB)
+  "max_file_size": 100,                        // 最大文件大小 (MB)
   "enable_backup": true,                       // 启用备份功能
   "enable_service": true,                      // 启用服务管理
   "enable_cleanup": true,                      // 启用文件清理
-  "cleanup_interval": 1,                       // 清理间隔(小时)
-  "file_max_age": 24,                         // 文件保留时间(小时)
+  "cleanup_interval": 1,                       // 清理间隔 (小时)
+  "file_max_age": 24,                         // 文件保留时间 (小时)
   "dir_permission": "0755",                    // 目录权限
   "file_permission": "0644",                   // 文件权限
   "exec_permission": "0755",                   // 可执行文件权限
@@ -174,7 +174,7 @@ RestartSec=5
 WantedBy=multi-user.target
 ```
 
-启用服务:
+启用服务：
 
 ```bash
 sudo systemctl enable upgrade-system
@@ -183,29 +183,35 @@ sudo systemctl start upgrade-system
 
 ### Docker 部署
 
-```dockerfile
-FROM golang:1.20-alpine AS builder
-WORKDIR /app
-COPY . .
-RUN go build -o upgrade-system main.go
-
-FROM alpine:latest
-RUN apk --no-cache add ca-certificates tar unzip
-WORKDIR /root/
-COPY --from=builder /app/upgrade-system .
-COPY config.json .
-EXPOSE 8080
-CMD ["./upgrade-system"]
-```
-
-构建和运行:
+#### 使用预构建镜像
 
 ```bash
-docker build -t upgrade-system .
-docker run -d -p 8080:8080 \
+# 拉取最新版本
+docker pull ghcr.io/linker-bot/linker-upgrader:latest
+
+# 运行容器
+docker run -d -p 6110:6110 \
+  --name linker-upgrader \
   -v /opt/myapp:/opt/myapp \
-  -v /etc/upgrade-system:/etc/upgrade-system \
-  upgrade-system
+  -v ./config.json:/etc/linker-upgrader/config.json \
+  ghcr.io/linker-bot/linker-upgrader:latest \
+  -config /etc/linker-upgrader/config.json
+```
+
+#### 使用 Docker Compose
+
+```yaml
+services:
+  linker-upgrader:
+    image: ghcr.io/linker-bot/linker-upgrader:latest
+    container_name: linker-upgrader
+    ports:
+      - "6110:6110"
+    volumes:
+      - /opt/myapp:/opt/myapp
+      - ./config.json:/etc/linker-upgrader/config.json
+    command: ["-config", "/etc/linker-upgrader/config.json"]
+    restart: unless-stopped
 ```
 
 ### Nginx 反向代理
