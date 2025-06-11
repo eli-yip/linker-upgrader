@@ -40,22 +40,22 @@
 ```bash
 # 克隆仓库
 git clone https://github.com/linker-bot/linker-upgrader.git
-cd upgrade-system
+cd linker-upgrader
 
 # 编译程序
-go build -o upgrade-system main.go
+go build -o linker-upgrader main.go
 
 # TBD
 # 或者下载预编译的二进制文件
-wget https://github.com/linker-bot/linker-upgrader/releases/latest/download/upgrade-system-linux-amd64
-chmod +x upgrade-system-linux-amd64
+wget https://github.com/linker-bot/linker-upgrader/releases/latest/download/linker-upgrader-linux-amd64
+chmod +x linker-upgrader-linux-amd64
 ```
 
 ### 2. 生成配置文件
 
 ```bash
 # 生成默认配置文件
-./upgrade-system -gen-config
+./linker-upgrader -gen-config
 
 # 配置文件将保存到 config.json
 ```
@@ -64,13 +64,13 @@ chmod +x upgrade-system-linux-amd64
 
 ```bash
 # 使用默认配置启动
-./upgrade-system
+./linker-upgrader
 
 # 指定端口启动
-./upgrade-system -port 8080
+./linker-upgrader -port 8080
 
 # 指定配置文件启动
-./upgrade-system -config /path/to/config.json
+./linker-upgrader -config /path/to/config.json
 ```
 
 ### 4. 访问 Web 界面
@@ -128,7 +128,7 @@ export TITLE="生产环境升级系统"
 ### 命令行参数
 
 ```bash
-./upgrade-system -h
+./linker-upgrader -h
   -config string
         配置文件路径 (default "./config.json")
   -gen-config
@@ -157,7 +157,7 @@ export TITLE="生产环境升级系统"
 
 ### Systemd 服务配置
 
-创建 systemd 服务文件 `/etc/systemd/system/upgrade-system.service`:
+创建 systemd 服务文件 `/etc/systemd/system/linker-upgrader.service`:
 
 ```ini
 [Unit]
@@ -167,8 +167,8 @@ After=network.target
 [Service]
 Type=simple
 User=root
-WorkingDirectory=/opt/upgrade-system
-ExecStart=/opt/upgrade-system/upgrade-system -config /etc/upgrade-system/config.json
+WorkingDirectory=/opt/linker-upgrader
+ExecStart=/opt/linker-upgrader/linker-upgrader -config /etc/linker-upgrader/config.json
 Restart=always
 RestartSec=5
 
@@ -179,8 +179,8 @@ WantedBy=multi-user.target
 启用服务：
 
 ```bash
-sudo systemctl enable upgrade-system
-sudo systemctl start upgrade-system
+sudo systemctl enable linker-upgrader
+sudo systemctl start linker-upgrader
 ```
 
 ### Docker 部署
@@ -269,7 +269,7 @@ server {
 netstat -tlnp | grep :8080
 
 # 检查权限
-ls -la upgrade-system
+ls -la linker-upgrader
 ```
 
 **Q: 文件上传失败？**
@@ -294,10 +294,10 @@ id
 
 ```bash
 # 查看程序日志
-tail -f /var/log/upgrade-system.log
+tail -f /var/log/linker-upgrader.log
 
 # 查看 systemd 日志
-journalctl -u upgrade-system -f
+journalctl -u linker-upgrader -f
 ```
 
 ## 🤝 贡献指南
@@ -308,8 +308,8 @@ journalctl -u upgrade-system -f
 
 ```bash
 # 克隆仓库
-git clone https://github.com/yourusername/upgrade-system.git
-cd upgrade-system
+git clone https://github.com/yourusername/linker-upgrader.git
+cd linker-upgrader
 
 # 安装依赖
 go mod tidy
