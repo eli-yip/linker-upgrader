@@ -1,6 +1,7 @@
 package main
 
 import (
+	"embed"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -15,6 +16,9 @@ import (
 	"strings"
 	"time"
 )
+
+//go:embed .github/banner.jpg
+var bannerFS embed.FS
 
 // 配置结构体
 type Config struct {
@@ -74,36 +78,128 @@ var appConfig *Config
 
 type UpgradeHandler struct{}
 
-// 动态 HTML 模板
+// 动态 HTML 模板（增加了banner图片展示）
 const htmlTemplate = `
 <!DOCTYPE html>
 <html>
 <head>
     <title>{{.Config.Title}}</title>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        body { font-family: Arial, sans-serif; margin: 40px; background-color: #f5f5f5; }
-        .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        h1 { color: #333; text-align: center; }
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 0; 
+            padding: 20px; 
+            background-color: #f5f5f5; 
+        }
+        .header-banner {
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto 20px auto;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .header-banner img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        .container { 
+            max-width: 600px; 
+            margin: 0 auto; 
+            background: white; 
+            padding: 30px; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
+        }
+        h1 { 
+            color: #333; 
+            text-align: center; 
+            margin-top: 0;
+        }
         .upload-form { margin: 20px 0; }
         .form-group { margin: 15px 0; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input[type="file"] { width: 100%; padding: 10px; border: 2px dashed #ddd; border-radius: 4px; display: block; width: 100%; padding: 10px 0;}
-        input[type="submit"] { background: #007cba; color: white; padding: 12px 30px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        label { 
+            display: block; 
+            margin-bottom: 5px; 
+            font-weight: bold; 
+        }
+        input[type="file"] { 
+            width: 100%; 
+            padding: 10px; 
+            border: 2px dashed #ddd; 
+            border-radius: 4px; 
+            display: block; 
+            width: 100%; 
+            padding: 10px 0;
+        }
+        input[type="submit"] { 
+            background: #007cba; 
+            color: white; 
+            padding: 12px 30px; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-size: 16px; 
+            width: 100%;
+        }
         input[type="submit"]:hover { background: #005a87; }
-        .status { padding: 15px; margin: 15px 0; border-radius: 4px; }
-        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
-        .logs { background: #f8f9fa; border: 1px solid #dee2e6; padding: 15px; border-radius: 4px; font-family: monospace; white-space: pre-wrap; max-height: 300px; overflow-y: auto; }
-        .config { background: #fff3cd; border: 1px solid #ffeaa7; padding: 10px; border-radius: 4px; font-size: 12px; margin-bottom: 20px; }
+        .status { 
+            padding: 15px; 
+            margin: 15px 0; 
+            border-radius: 4px; 
+        }
+        .success { 
+            background: #d4edda; 
+            color: #155724; 
+            border: 1px solid #c3e6cb; 
+        }
+        .error { 
+            background: #f8d7da; 
+            color: #721c24; 
+            border: 1px solid #f5c6cb; 
+        }
+        .info { 
+            background: #d1ecf1; 
+            color: #0c5460; 
+            border: 1px solid #bee5eb; 
+        }
+        .logs { 
+            background: #f8f9fa; 
+            border: 1px solid #dee2e6; 
+            padding: 15px; 
+            border-radius: 4px; 
+            font-family: monospace; 
+            white-space: pre-wrap; 
+            max-height: 300px; 
+            overflow-y: auto; 
+            font-size: 12px;
+        }
+        .config { 
+            background: #fff3cd; 
+            border: 1px solid #ffeaa7; 
+            padding: 10px; 
+            border-radius: 4px; 
+            font-size: 12px; 
+            margin-bottom: 20px; 
+        }
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .container { padding: 20px; }
+            .header-banner { margin-bottom: 10px; }
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>{{.Config.Title}}</h1>
-        
-        <div class="config">
+		<div class="header-banner">
+	        <img src="/banner" alt="{{.Config.Title}}" />
+    	</div>
+
+		<h1>{{.Config.Title}}</h1>
+
+		<div class="config">
             <strong>当前配置:</strong> 目标目录：{{.Config.TargetDir}} | 服务：{{.Config.ServiceName}} | 最大文件：{{.Config.MaxFileSize}}MB
         </div>
         
@@ -123,7 +219,7 @@ const htmlTemplate = `
                 <input type="file" name="file" id="file" required accept="{{.AcceptTypesStr}}">
             </div>
             <div class="form-group">
-                <input type="submit" value="上传并升级程序">
+                <input type="submit" value="🚀 上传并升级程序">
             </div>
         </form>
         
@@ -146,6 +242,25 @@ type PageData struct {
 	MessageType    string
 	Logs           string
 	AcceptTypesStr string
+}
+
+// Banner图片处理器
+func bannerHandler(w http.ResponseWriter, r *http.Request) {
+	// 读取嵌入的图片文件
+	bannerData, err := bannerFS.ReadFile(".github/banner.jpg")
+	if err != nil {
+		log.Printf("读取banner图片失败: %v", err)
+		http.NotFound(w, r)
+		return
+	}
+
+	// 设置响应头
+	w.Header().Set("Content-Type", "image/jpeg")
+	w.Header().Set("Cache-Control", "public, max-age=86400") // 缓存1天
+	w.Header().Set("Content-Length", strconv.Itoa(len(bannerData)))
+
+	// 输出图片数据
+	w.Write(bannerData)
 }
 
 func (h *UpgradeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -564,6 +679,7 @@ func main() {
 	// 设置路由
 	http.Handle("/", &UpgradeHandler{})
 	http.HandleFunc("/upload", uploadHandler)
+	http.HandleFunc("/banner", bannerHandler) // 新增：banner图片路由
 
 	// 启动服务器
 	log.Printf("程序升级系统启动成功")
