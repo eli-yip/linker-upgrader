@@ -73,7 +73,7 @@ chmod +x upgrade-system-linux-amd64
 
 ### 4. 访问 Web 界面
 
-打开浏览器访问: `http://localhost:8080`
+打开浏览器访问：`http://localhost:8080`
 
 ## ⚙️ 配置详解
 
@@ -86,12 +86,12 @@ chmod +x upgrade-system-linux-amd64
   "backup_dir": "/opt/myapp/backup",            // 备份目录
   "service_name": "myapp",                      // systemd 服务名
   "port": ":8080",                             // 服务端口
-  "max_file_size": 100,                        // 最大文件大小(MB)
+  "max_file_size": 100,                        // 最大文件大小 (MB)
   "enable_backup": true,                       // 启用备份功能
   "enable_service": true,                      // 启用服务管理
   "enable_cleanup": true,                      // 启用文件清理
-  "cleanup_interval": 1,                       // 清理间隔(小时)
-  "file_max_age": 24,                         // 文件保留时间(小时)
+  "cleanup_interval": 1,                       // 清理间隔 (小时)
+  "file_max_age": 24,                         // 文件保留时间 (小时)
   "dir_permission": "0755",                    // 目录权限
   "file_permission": "0644",                   // 文件权限
   "exec_permission": "0755",                   // 可执行文件权限
@@ -174,7 +174,7 @@ RestartSec=5
 WantedBy=multi-user.target
 ```
 
-启用服务:
+启用服务：
 
 ```bash
 sudo systemctl enable upgrade-system
@@ -198,7 +198,7 @@ EXPOSE 8080
 CMD ["./upgrade-system"]
 ```
 
-构建和运行:
+构建和运行：
 
 ```bash
 docker build -t upgrade-system .

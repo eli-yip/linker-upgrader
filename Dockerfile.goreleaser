@@ -1,0 +1,9 @@
+FROM alpine:3.21
+
+COPY --link linker-upgrader /usr/local/bin/linker-upgrader
+
+EXPOSE 5260
+
+ENV SERVER_PORT="6110"
+
+ENTRYPOINT ["linker-upgrader"]
