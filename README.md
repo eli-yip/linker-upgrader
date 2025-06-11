@@ -8,6 +8,8 @@ English | [中文](README_zhCN.md)
 
 ## ✨ Features
 
+![](.github/preview.png)
+
 - 🌐 **Web Interface**: User-friendly interface with drag-and-drop upload support
 - 📦 **Multi-format Support**: `.tar.gz`, `.zip`, `.gz`, executable files
 - 🔧 **Service Management**: Automatic stop/start of systemd services

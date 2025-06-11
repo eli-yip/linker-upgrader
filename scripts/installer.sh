@@ -15,3 +15,6 @@ sudo systemctl daemon-reload
 sudo systemctl start linker-upgrade.service 
 sudo systemctl status linker-upgrade.service 
 
+sudo mkdir -p /opt/linkerbot
+sudo mkdir -p /opt/linkerbot/backup
+sudo chown -R `whoami` /opt/linkerbot/
