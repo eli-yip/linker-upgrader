@@ -78,7 +78,7 @@ var appConfig *Config
 
 type UpgradeHandler struct{}
 
-// 动态 HTML 模板（增加了banner图片展示）
+// 增强的HTML模板，支持拖拽上传
 const htmlTemplate = `
 <!DOCTYPE html>
 <html>
@@ -125,15 +125,105 @@ const htmlTemplate = `
             margin-bottom: 5px; 
             font-weight: bold; 
         }
-        input[type="file"] { 
-            width: 100%; 
-            padding: 10px; 
-            border: 2px dashed #ddd; 
-            border-radius: 4px; 
-            display: block; 
-            width: 100%; 
-            padding: 10px 0;
+
+        /* 拖拽上传区域样式 */
+        .drag-drop-area {
+            border: 2px dashed #007cba;
+            border-radius: 8px;
+            padding: 40px 20px;
+            text-align: center;
+            background-color: #f8f9ff;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            margin: 15px 0;
         }
+
+        .drag-drop-area:hover {
+            border-color: #005a87;
+            background-color: #f0f4ff;
+        }
+
+        .drag-drop-area.drag-over {
+            border-color: #28a745;
+            background-color: #f0fff4;
+            transform: scale(1.02);
+        }
+
+        .drag-drop-area.has-file {
+            border-color: #28a745;
+            background-color: #d4edda;
+        }
+
+        .drag-drop-content {
+            pointer-events: none;
+        }
+
+        .drag-drop-icon {
+            font-size: 48px;
+            color: #007cba;
+            margin-bottom: 15px;
+        }
+
+        .drag-drop-text {
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .drag-drop-hint {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .file-info {
+            display: none;
+            padding: 15px;
+            background-color: #e9ecef;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+
+        .file-info.show {
+            display: block;
+        }
+
+        .file-name {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .file-size {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .file-actions {
+            margin-top: 10px;
+        }
+
+        .remove-file {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .remove-file:hover {
+            background: #c82333;
+        }
+
+        /* 隐藏原始文件输入框 */
+        .file-input-hidden {
+            position: absolute;
+            left: -9999px;
+            opacity: 0;
+        }
+
         input[type="submit"] { 
             background: #007cba; 
             color: white; 
@@ -143,8 +233,16 @@ const htmlTemplate = `
             cursor: pointer; 
             font-size: 16px; 
             width: 100%;
+            transition: background-color 0.3s ease;
         }
-        input[type="submit"]:hover { background: #005a87; }
+        input[type="submit"]:hover {
+            background: #005a87;
+        }
+        input[type="submit"]:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+
         .status { 
             padding: 15px; 
             margin: 15px 0; 
@@ -184,45 +282,93 @@ const htmlTemplate = `
             font-size: 12px; 
             margin-bottom: 20px; 
         }
+
+        /* 进度条样式 */
+        .upload-progress {
+            display: none;
+            width: 100%;
+            height: 6px;
+            background-color: #e9ecef;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background-color: #007cba;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
         @media (max-width: 768px) {
             body { padding: 10px; }
             .container { padding: 20px; }
             .header-banner { margin-bottom: 10px; }
+            .drag-drop-area { padding: 30px 15px; }
+            .drag-drop-icon { font-size: 36px; }
+            .drag-drop-text { font-size: 14px; }
         }
     </style>
 </head>
 <body>
     <div class="container">
-		<div class="header-banner">
-	        <img src="/banner" alt="{{.Config.Title}}" />
-    	</div>
+        <div class="header-banner">
+            <img src="/banner" alt="{{.Config.Title}}" />
+        </div>
 
-		<h1>{{.Config.Title}}</h1>
+        <h1>{{.Config.Title}}</h1>
 
-		<div class="config">
+        <div class="config">
             <strong>当前配置:</strong> 目标目录：{{.Config.TargetDir}} | 服务：{{.Config.ServiceName}} | 最大文件：{{.Config.MaxFileSize}}MB
         </div>
-        
+
         {{if .Message}}
         <div class="status {{.MessageType}}">
             {{.Message}}
         </div>
         {{end}}
-        
+
         {{if .Logs}}
         <div class="logs">{{.Logs}}</div>
         {{end}}
-        
-        <form class="upload-form" enctype="multipart/form-data" action="/upload" method="post">
+
+        <form class="upload-form" enctype="multipart/form-data" action="/upload" method="post" id="uploadForm">
             <div class="form-group">
-                <label for="file">选择程序文件 ({{.Config.Description}}):</label>
-                <input type="file" name="file" id="file" required accept="{{.AcceptTypesStr}}">
+                <label>选择程序文件 ({{.Config.Description}}):</label>
+
+                <!-- 拖拽上传区域 -->
+                <div class="drag-drop-area" id="dragDropArea">
+                    <div class="drag-drop-content">
+                        <div class="drag-drop-icon">📁</div>
+                        <div class="drag-drop-text">拖拽文件到此处或点击选择</div>
+                        <div class="drag-drop-hint">支持 {{.Config.Description}}</div>
+                    </div>
+                </div>
+
+                <!-- 隐藏的文件输入框 -->
+                <input type="file" name="file" id="fileInput" class="file-input-hidden" accept="{{.AcceptTypesStr}}" required>
+
+                <!-- 文件信息显示区域 -->
+                <div class="file-info" id="fileInfo">
+                    <div class="file-name" id="fileName"></div>
+                    <div class="file-size" id="fileSize"></div>
+                    <div class="file-actions">
+                        <button type="button" class="remove-file" id="removeFile">✕ 移除文件</button>
+                    </div>
+                </div>
+
+                <!-- 上传进度条 -->
+                <div class="upload-progress" id="uploadProgress">
+                    <div class="progress-bar" id="progressBar"></div>
+                </div>
             </div>
+
             <div class="form-group">
-                <input type="submit" value="🚀 上传并升级程序">
+                <input type="submit" value="🚀 上传并升级程序" id="submitBtn">
             </div>
         </form>
-        
+
         <div class="info">
             <strong>升级流程说明:</strong><br>
             {{if .Config.EnableService}}1. 停止当前服务 ({{.Config.ServiceName}})<br>{{end}}
@@ -232,6 +378,164 @@ const htmlTemplate = `
             {{if .Config.EnableService}}5. 启动服务并验证状态<br>{{end}}
         </div>
     </div>
+
+    <script>
+        // 拖拽上传功能
+        document.addEventListener('DOMContentLoaded', function() {
+            const dragDropArea = document.getElementById('dragDropArea');
+            const fileInput = document.getElementById('fileInput');
+            const fileInfo = document.getElementById('fileInfo');
+            const fileName = document.getElementById('fileName');
+            const fileSize = document.getElementById('fileSize');
+            const removeFileBtn = document.getElementById('removeFile');
+            const uploadForm = document.getElementById('uploadForm');
+            const submitBtn = document.getElementById('submitBtn');
+            const uploadProgress = document.getElementById('uploadProgress');
+            const progressBar = document.getElementById('progressBar');
+
+            // 点击拖拽区域打开文件选择
+            dragDropArea.addEventListener('click', function() {
+                fileInput.click();
+            });
+
+            // 文件选择事件
+            fileInput.addEventListener('change', function(e) {
+                handleFileSelect(e.target.files[0]);
+            });
+
+            // 拖拽事件处理
+            dragDropArea.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                dragDropArea.classList.add('drag-over');
+            });
+
+            dragDropArea.addEventListener('dragleave', function(e) {
+                e.preventDefault();
+                dragDropArea.classList.remove('drag-over');
+            });
+
+            dragDropArea.addEventListener('drop', function(e) {
+                e.preventDefault();
+                dragDropArea.classList.remove('drag-over');
+
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handleFileSelect(files[0]);
+                    // 手动设置文件到input元素
+                    const dt = new DataTransfer();
+                    dt.items.add(files[0]);
+                    fileInput.files = dt.files;
+                }
+            });
+
+            // 移除文件按钮
+            removeFileBtn.addEventListener('click', function() {
+                fileInput.value = '';
+                fileInfo.classList.remove('show');
+                dragDropArea.classList.remove('has-file');
+                updateDragDropContent();
+            });
+
+            // 处理文件选择
+            function handleFileSelect(file) {
+                if (!file) return;
+
+                // 检查文件大小
+                const maxSize = {{.Config.MaxFileSize}} * 1024 * 1024; // MB to bytes
+                if (file.size > maxSize) {
+                    alert('文件大小超过限制 ({{.Config.MaxFileSize}}MB)');
+                    return;
+                }
+
+                // 检查文件类型
+                const acceptedTypes = '{{.AcceptTypesStr}}'.split(',');
+                const fileExt = '.' + file.name.split('.').pop().toLowerCase();
+                const isAccepted = acceptedTypes.some(type => {
+                    if (type.startsWith('.')) {
+                        return file.name.toLowerCase().endsWith(type);
+                    }
+                    return file.type === type;
+                }) || file.name.toLowerCase().includes('.tar.gz');
+
+                if (!isAccepted) {
+                    alert('不支持的文件类型。请选择：{{.Config.Description}}');
+                    return;
+                }
+
+                // 显示文件信息
+                fileName.textContent = file.name;
+                fileSize.textContent = formatFileSize(file.size);
+                fileInfo.classList.add('show');
+                dragDropArea.classList.add('has-file');
+                updateDragDropContent(file.name);
+            }
+
+            // 更新拖拽区域内容
+            function updateDragDropContent(filename) {
+                const icon = dragDropArea.querySelector('.drag-drop-icon');
+                const text = dragDropArea.querySelector('.drag-drop-text');
+                const hint = dragDropArea.querySelector('.drag-drop-hint');
+
+                if (filename) {
+                    icon.textContent = '✅';
+                    text.textContent = '已选择: ' + filename;
+                    hint.textContent = '点击可重新选择文件';
+                } else {
+                    icon.textContent = '📁';
+                    text.textContent = '拖拽文件到此处或点击选择';
+                    hint.textContent = '支持 {{.Config.Description}}';
+                }
+            }
+
+            // 格式化文件大小
+            function formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+
+            // 表单提交处理
+            uploadForm.addEventListener('submit', function(e) {
+                if (!fileInput.files[0]) {
+                    e.preventDefault();
+                    alert('请先选择要上传的文件');
+                    return;
+                }
+
+                // 禁用提交按钮
+                submitBtn.disabled = true;
+                submitBtn.value = '🔄 正在上传...';
+
+                // 显示进度条
+                uploadProgress.style.display = 'block';
+
+                // 模拟进度条（实际项目中应该使用XMLHttpRequest来获取真实进度）
+                let progress = 0;
+                const progressInterval = setInterval(function() {
+                    progress += Math.random() * 15;
+                    if (progress > 90) progress = 90;
+                    progressBar.style.width = progress + '%';
+                }, 200);
+
+                // 表单提交后清理
+                setTimeout(function() {
+                    clearInterval(progressInterval);
+                    progressBar.style.width = '100%';
+                }, 1000);
+            });
+
+            // 防止整个页面的拖拽默认行为
+            document.addEventListener('dragover', function(e) {
+                e.preventDefault();
+            });
+
+            document.addEventListener('drop', function(e) {
+                e.preventDefault();
+            });
+        });
+    </script>
 </body>
 </html>
 `
@@ -679,7 +983,7 @@ func main() {
 	// 设置路由
 	http.Handle("/", &UpgradeHandler{})
 	http.HandleFunc("/upload", uploadHandler)
-	http.HandleFunc("/banner", bannerHandler) // 新增：banner图片路由
+	http.HandleFunc("/banner", bannerHandler)
 
 	// 启动服务器
 	log.Printf("程序升级系统启动成功")
