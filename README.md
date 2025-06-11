@@ -40,22 +40,22 @@ English | [中文](README_zhCN.md)
 ```bash
 # Clone repository
 git clone https://github.com/linker-bot/linker-upgrader.git
-cd upgrade-system
+cd linker-upgrader
 
 # Compile program
-go build -o upgrade-system main.go
+go build -o linker-upgrader main.go
 
 # TBD
 # Or download pre-compiled binary
-wget https://github.com/linker-bot/linker-upgrader/releases/latest/download/upgrade-system-linux-amd64
-chmod +x upgrade-system-linux-amd64
+wget https://github.com/linker-bot/linker-upgrader/releases/latest/download/linker-upgrader-linux-amd64
+chmod +x linker-upgrader-linux-amd64
 ```
 
 ### 2. Generate Configuration File
 
 ```bash
 # Generate default configuration file
-./upgrade-system -gen-config
+./linker-upgrader -gen-config
 
 # Configuration file will be saved to config.json
 ```
@@ -64,13 +64,13 @@ chmod +x upgrade-system-linux-amd64
 
 ```bash
 # Start with default configuration
-./upgrade-system
+./linker-upgrader
 
 # Start with specified port
-./upgrade-system -port 8080
+./linker-upgrader -port 8080
 
 # Start with specified configuration file
-./upgrade-system -config /path/to/config.json
+./linker-upgrader -config /path/to/config.json
 ```
 
 ### 4. Access Web Interface
@@ -128,7 +128,7 @@ export TITLE="Production Upgrade System"
 ### Command Line Parameters
 
 ```bash
-./upgrade-system -h
+./linker-upgrader -h
   -config string
         Configuration file path (default "./config.json")
   -gen-config
@@ -157,7 +157,7 @@ The system automatically executes the following steps based on configuration:
 
 ### Systemd Service Configuration
 
-Create systemd service file `/etc/systemd/system/upgrade-system.service`:
+Create systemd service file `/etc/systemd/system/linker-upgrader.service`:
 
 ```ini
 [Unit]
@@ -167,8 +167,8 @@ After=network.target
 [Service]
 Type=simple
 User=root
-WorkingDirectory=/opt/upgrade-system
-ExecStart=/opt/upgrade-system/upgrade-system -config /etc/upgrade-system/config.json
+WorkingDirectory=/opt/linker-upgrader
+ExecStart=/opt/linker-upgrader/linker-upgrader -config /etc/linker-upgrader/config.json
 Restart=always
 RestartSec=5
 
@@ -179,8 +179,8 @@ WantedBy=multi-user.target
 Enable service:
 
 ```bash
-sudo systemctl enable upgrade-system
-sudo systemctl start upgrade-system
+sudo systemctl enable linker-upgrader
+sudo systemctl start linker-upgrader
 ```
 
 ### Docker Deployment
@@ -270,7 +270,7 @@ Successful response displays a page containing:
 netstat -tlnp | grep :8080
 
 # Check permissions
-ls -la upgrade-system
+ls -la linker-upgrader
 ```
 
 **Q: File upload failed?**
@@ -295,10 +295,10 @@ id
 
 ```bash
 # View program logs
-tail -f /var/log/upgrade-system.log
+tail -f /var/log/linker-upgrader.log
 
 # View systemd logs
-journalctl -u upgrade-system -f
+journalctl -u linker-upgrader -f
 ```
 
 ## 🤝 Contributing Guidelines
@@ -309,8 +309,8 @@ We welcome all forms of contributions!
 
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/upgrade-system.git
-cd upgrade-system
+git clone https://github.com/yourusername/linker-upgrader.git
+cd linker-upgrader
 
 # Install dependencies
 go mod tidy
